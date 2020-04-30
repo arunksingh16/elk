@@ -1,0 +1,42 @@
+# Arun: File is modified to furnish few exceptional configurations
+# 1- Using AZ based affinity
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: elastic-cluster
+  name: elk-clster
+spec:
+  version: 7.6.2
+  nodeSets:
+  - name: zone-a
+    count: 1
+    config:
+      node.attr.zone: europe-west3-a
+      cluster.routing.allocation.awareness.attributes: zone
+    podTemplate:
+      spec:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: failure-domain.beta.kubernetes.io/zone
+                  operator: In
+                  values:
+                  - europe-west3-a
+  - name: zone-b
+    count: 1
+    config:
+      node.attr.zone: europe-west3-b
+      cluster.routing.allocation.awareness.attributes: zone
+    podTemplate:
+      spec:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: failure-domain.beta.kubernetes.io/zone
+                  operator: In
+                  values:
+                  - europe-west3-b

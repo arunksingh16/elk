@@ -1,0 +1,58 @@
+# Arun: File is modified to furnish few exceptional configurations
+# 1- Using Self signed certificate
+# 2- Change the way how Elasticsearch is going to be exposed as a service :
+# 3- Virtual address space on Linux distributions are too low for Elasticsearch, production workloads, it is strongly recommended to increase the kernel setting vm.max_map_count
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: elastic-cluster
+  namespace: elk-clster
+spec:
+  version: 7.6.2
+  http:
+    service:
+      spec:
+        type: LoadBalancer
+    tls:
+      selfSignedCertificate:
+        subjectAltNames:
+        - ip: 10.0.0.4
+        - dns: xyz.example.com
+  nodeSets:
+  - name: master
+    count: 1
+    config:
+      node.master: true
+      node.data: false
+      node.ingest: false
+      xpack.ml.enabled: true
+      node.store.allow_mmap: false
+    podTemplate:
+      spec:
+        initContainers:
+        - name: sysctl
+          securityContext:
+            privileged: true
+          command: ['sh', '-c', 'sysctl -w vm.max_map_count=262144']
+        containers:
+        - name: elasticsearch
+          env:
+          - name: ES_JAVA_OPTS
+            value: -Xms1g -Xmx1g
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: 0.5
+            limits:
+              memory: 2Gi
+              cpu: 1
+    volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: default

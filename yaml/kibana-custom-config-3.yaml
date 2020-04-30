@@ -1,0 +1,34 @@
+# with node selector
+# The certificate must be stored under tls.crt and the private key must be stored under tls.key. If your certificate was not issued by a well-known CA, you must include the trust chain under ca.crt as well.
+# kubectl create secret generic my-cert --from-file=ca.crt=tls.crt --from-file=tls.crt=tls.crt --from-file=tls.key=tls.key
+# https://www.elastic.co/guide/en/cloud-on-k8s/current/k8s-tls-certificates.html
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: kibana-cluster
+  namespace: elastic-system
+spec:
+  version: 7.6.2
+  count: 1
+  elasticsearchRef:
+    name: "elasticsearch-cluster"
+  http:
+    service:
+      spec:
+        type: LoadBalancer
+    tls:
+      certificate:
+        secretName: certificate-es-cert
+  podTemplate:
+    spec:
+      containers:
+      - name: kibana
+        resources:
+          requests:
+            memory: 1Gi
+            cpu: 0.5
+          limits:
+            memory: 2Gi
+            cpu: 2
+      nodeSelector:
+        type: frontend
