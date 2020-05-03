@@ -2,20 +2,18 @@
 # 1- Using generated cerficate
 # 2- Scheduling using node selector
 # kubectl label nodes <node> <label-key>=<label-value>
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: elk-clster
+---
 apiVersion: elasticsearch.k8s.elastic.co/v1
 kind: Elasticsearch
 metadata:
   name: elastic-cluster
-  namespace: elk-clster
+  namespace: elastic-system
 spec:
   version: 7.6.2
-  http:
-    service:
-      spec:
-        type: LoadBalancer
-    tls:
-      certificate:
-        secretName: elastic-es-cert
   nodeSets:
   - name: master
     count: 1
@@ -49,7 +47,47 @@ spec:
               cpu: 1
     volumeClaimTemplates:
     - metadata:
-        name: data
+        name: elasticsearch-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+        storageClassName: default
+  - name: data
+    count: 1
+    config:
+      node.master: false
+      node.data: true
+      node.ingest: true
+      xpack.ml.enabled: true
+      node.store.allow_mmap: false
+    podTemplate:
+      spec:
+        nodeSelector:
+          xnum: node-2
+          environment: production
+        initContainers:
+        - name: sysctl
+          securityContext:
+            privileged: true
+          command: ['sh', '-c', 'sysctl -w vm.max_map_count=262144']
+        containers:
+        - name: elasticsearch
+          env:
+          - name: ES_JAVA_OPTS
+            value: -Xms1g -Xmx1g
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: 0.5
+            limits:
+              memory: 2Gi
+              cpu: 1
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
       spec:
         accessModes:
         - ReadWriteOnce
