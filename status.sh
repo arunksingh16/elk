@@ -1,3 +1,10 @@
+echo "\n"
+echo "----------------------------------------------------------------------------------"
+echo "Custom res def"
+echo "+++++++++++++++++++++"
+kubectl get crd -o wide
+echo "\n"
+echo "----------------------------------------------------------------------------------"
 echo "Elasticsearch Object"
 echo "+++++++++++++++++++++"
 kubectl get elasticsearch --all-namespaces

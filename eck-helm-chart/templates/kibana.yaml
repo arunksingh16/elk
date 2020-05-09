@@ -1,13 +1,13 @@
 apiVersion: kibana.k8s.elastic.co/v1
 kind: Kibana
 metadata:
-  name: kibana-cluster
-  namespace: elastic-system
+  name: "kibana-cluster-{{ .Values.tag | lower }}"
+  namespace: {{ .Values.namespace }}
 spec:
   version: 7.6.2
-  count: 1
+  count: {{ .Values.kibana.replicaCount }}
   elasticsearchRef:
-    name: elastic-cluster
+    name: "{{ .Values.ElclusterName }}-{{ .Values.tag | lower }}-om"
   http:
     service:
       spec:
